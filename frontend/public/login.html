@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Login - MySchools</title>
+</head>
+<body>
+  <h2>Login</h2>
+  <div class="box">
+    <label>Email</label>
+    <input id="email" type="email" />
+    <label>Password</label>
+    <input id="password" type="password" />
+    <button id="btn">Login</button>
+    <pre id="result"></pre>
+  </div>
+  <a href="/app">Back</a>
+  <script>
+    document.getElementById('btn').addEventListener('click', async () => {
+      const body = {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+      };
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+      const json = await res.json();
+      document.getElementById('result').textContent = JSON.stringify(json, null, 2);
+      if (json.success && json.data && json.data.token) {
+        const token = json.data.token;
+        const user = json.data.user || null;
+        localStorage.setItem('myschools_token', token);
+        if (user) {
+          localStorage.setItem('myschools_role', user.role || 'student');
+          localStorage.setItem('myschools_user', JSON.stringify(user));
+        }
+        alert('Token and user info saved to localStorage');
+        // redirect to dashboard
+        window.location.href = '/app/dashboard.html';
+      }
+    });
+  </script>
+</body>
+</html>

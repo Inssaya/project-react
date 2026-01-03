@@ -1,0 +1,8 @@
+{
+  "expo": {
+    "name": "MySchools Mobile",
+    "slug": "myschools-mobile",
+    "platforms": ["ios","android"],
+    "version": "1.0.0"
+  }
+}

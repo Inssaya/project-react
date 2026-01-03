@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Register - MySchools</title>
+</head>
+<body>
+  <h2>Register</h2>
+  <div class="box">
+    <label>Email</label>
+    <input id="email" type="email" />
+    <label>Full name</label>
+    <input id="full_name" />
+    <label>Password</label>
+    <input id="password" type="password" />
+    <label>Role</label>
+    <select id="role"><option value="student">student</option><option value="teacher">teacher</option><option value="admin">admin</option></select>
+    <button id="btn">Register</button>
+    <pre id="result"></pre>
+  </div>
+  <a href="/app">Back</a>
+  <script>
+    document.getElementById('btn').addEventListener('click', async () => {
+      const body = {
+        email: document.getElementById('email').value,
+        password: document.getElementById('password').value,
+        full_name: document.getElementById('full_name').value,
+        role: document.getElementById('role').value,
+      };
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(body)
+      });
+      const json = await res.json();
+      document.getElementById('result').textContent = JSON.stringify(json, null, 2);
+    });
+  </script>
+</body>
+</html>

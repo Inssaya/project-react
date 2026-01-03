@@ -1,0 +1,169 @@
+╔════════════════════════════════════════════════════════════════╗
+║           MySchools - Quick Command Reference                  ║
+╚════════════════════════════════════════════════════════════════╝
+
+┌────────────────────────────────────────────────────────────────┐
+│ 🚀 BACKEND SETUP & TESTING                                     │
+└────────────────────────────────────────────────────────────────┘
+
+1. Install Backend Dependencies:
+   cd backend
+   npm install
+
+2. Start Backend Server (Development):
+   cd backend
+   npm run dev
+   ➜ Backend runs on: http://localhost:3001
+
+3. Start Backend Server (Production):
+   cd backend
+   npm start
+
+4. Create Admin User:
+   cd backend
+   npm run create-admin
+   ➜ Follow prompts to enter email/password
+
+5. Test Basic API:
+   cd backend
+   node test-api.js
+
+6. Test ALL Backend Endpoints:
+   cd backend
+   node test-all-endpoints.js
+   ⚠️ Update credentials in file first!
+
+7. Run Backend Tests:
+   cd backend
+   npm test
+
+┌────────────────────────────────────────────────────────────────┐
+│ 📱 FRONTEND SETUP & START                                      │
+└────────────────────────────────────────────────────────────────┘
+
+1. Install Frontend Dependencies:
+   npm install
+
+2. Start Frontend (Expo):
+   npm start
+   ➜ Then press:
+      - w = Open in web browser
+      - a = Open in Android emulator
+      - i = Open in iOS simulator
+      - r = Reload app
+
+3. Start with Clear Cache:
+   npx expo start --clear
+
+4. Start on Specific Platform:
+   npm run android    # Android
+   npm run ios        # iOS  
+   npm run web        # Web browser
+
+┌────────────────────────────────────────────────────────────────┐
+│ 🔄 START BOTH (Frontend + Backend)                             │
+└────────────────────────────────────────────────────────────────┘
+
+   npm run start:all
+   ➜ Starts both backend and frontend simultaneously
+
+┌────────────────────────────────────────────────────────────────┐
+│ 🧪 MANUAL API TESTING (with curl)                              │
+└────────────────────────────────────────────────────────────────┘
+
+1. Health Check:
+   curl http://localhost:3001/
+
+2. API Routes:
+   curl http://localhost:3001/api
+
+3. Login:
+   curl -X POST http://localhost:3001/api/auth/login \
+     -H "Content-Type: application/json" \
+     -d "{\"email\":\"admin@example.com\",\"password\":\"yourpassword\"}"
+
+4. Get Schools (with auth):
+   curl http://localhost:3001/api/schools \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE"
+
+5. Create School:
+   curl -X POST http://localhost:3001/api/schools \
+     -H "Content-Type: application/json" \
+     -H "Authorization: Bearer YOUR_TOKEN_HERE" \
+     -d "{\"name\":\"My School\",\"address\":\"123 Main St\"}"
+
+┌────────────────────────────────────────────────────────────────┐
+│ 🗄️ DATABASE SETUP (Supabase)                                   │
+└────────────────────────────────────────────────────────────────┘
+
+1. Go to: https://supabase.com
+2. Create new project
+3. Go to SQL Editor
+4. Run: backend/src/database/schema.sql
+5. Update backend/.env with your credentials
+
+┌────────────────────────────────────────────────────────────────┐
+│ 🐛 TROUBLESHOOTING                                              │
+└────────────────────────────────────────────────────────────────┘
+
+Backend not starting?
+  ➜ Check if port 3001 is available
+  ➜ Verify .env file exists with correct values
+  ➜ Run: cd backend && npm install
+
+Frontend not starting?
+  ➜ Run: npm install
+  ➜ Clear cache: npx expo start --clear
+  ➜ Check Node.js version (need v16+)
+
+Cannot connect frontend to backend?
+  ➜ Check backend is running (http://localhost:3001)
+  ➜ Verify app/config.js has correct BASE_URL
+  ➜ For physical device: Use your PC's IP address
+
+Database errors?
+  ➜ Verify Supabase credentials in backend/.env
+  ➜ Check if schema.sql was executed in Supabase
+  ➜ Ensure admin user was created
+
+┌────────────────────────────────────────────────────────────────┐
+│ 📝 TESTING WORKFLOW                                             │
+└────────────────────────────────────────────────────────────────┘
+
+Complete Testing Flow:
+
+1. cd backend && npm run dev
+   ✓ Backend starts on port 3001
+
+2. cd backend && npm run create-admin
+   ✓ Create your admin user
+
+3. cd backend && node test-all-endpoints.js
+   ✓ Test all backend APIs
+   ⚠️ Edit file to add your admin credentials first!
+
+4. npm start
+   ✓ Start frontend (press 'w' for web)
+
+5. Login with admin credentials
+   ✓ Test all UI features
+
+┌────────────────────────────────────────────────────────────────┐
+│ 🔑 DEFAULT ENDPOINTS                                            │
+└────────────────────────────────────────────────────────────────┘
+
+Backend API:     http://localhost:3001
+Frontend Web:    http://localhost:8081 (or 8082)
+API Docs:        http://localhost:3001/api
+
+┌────────────────────────────────────────────────────────────────┐
+│ 💡 PRO TIPS                                                     │
+└────────────────────────────────────────────────────────────────┘
+
+• Keep backend running in one terminal
+• Run frontend in separate terminal
+• Check backend logs for API errors
+• Use test-all-endpoints.js for quick verification
+• For mobile testing: Update IP in app/config.js
+
+═══════════════════════════════════════════════════════════════════

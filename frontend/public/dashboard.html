@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Dashboard - MySchools</title>
+</head>
+<body>
+  <h2>Dashboard</h2>
+  <p>Token stored in localStorage: <code id="tok"></code></p>
+  <div class="box">
+    <h3>Schools</h3>
+    <button id="listSchools">List Schools</button>
+    <pre id="schools"></pre>
+  </div>
+  <div class="box">
+    <h3>Attendance</h3>
+    <button id="listAttendance">List Attendance</button>
+    <pre id="attendance"></pre>
+  </div>
+  <a href="/app">Back</a>
+  <script>
+    const token = localStorage.getItem('myschools_token');
+    document.getElementById('tok').textContent = token || '(no token)';
+
+    document.getElementById('listSchools').addEventListener('click', async () => {
+      const res = await fetch('/api/schools', { headers: { Authorization: 'Bearer ' + token } });
+      const json = await res.json();
+      document.getElementById('schools').textContent = JSON.stringify(json, null, 2);
+    });
+
+    document.getElementById('listAttendance').addEventListener('click', async () => {
+      const res = await fetch('/api/attendance', { headers: { Authorization: 'Bearer ' + token } });
+      const json = await res.json();
+      document.getElementById('attendance').textContent = JSON.stringify(json, null, 2);
+    });
+  </script>
+</body>
+</html>
