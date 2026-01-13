@@ -3,8 +3,6 @@ import attendanceRoutes from '../modules/attendance/attendance.routes.js';
 import authRoutes from '../modules/auth/auth.routes.js';
 import classRoutes from '../modules/classes/class.routes.js';
 import debugRoutes from '../modules/debug/debug.routes.js';
-import gradeRoutes from '../modules/grades/grade.routes.js';
-import majorRoutes from '../modules/majors/major.routes.js';
 import schoolRoutes from '../modules/schools/school.routes.js';
 import studentRoutes from '../modules/students/student.routes.js';
 import teacherRoutes from '../modules/teachers/teacher.routes.js';
@@ -25,8 +23,6 @@ router.get('/', (req, res) => {
 			'/api/students',
 			'/api/teachers',
 			'/api/attendance',
-			'/api/grades',
-			'/api/majors',
 		],
 	});
 });
@@ -39,8 +35,6 @@ router.use('/classes', classRoutes);
 router.use('/students', studentRoutes);
 router.use('/teachers', teacherRoutes);
 router.use('/attendance', attendanceRoutes);
-router.use('/grades', gradeRoutes);
-router.use('/majors', majorRoutes);
-router.use('/debug', debugRoutes);
+	router.use('/debug', debugRoutes);
 
 export default router;

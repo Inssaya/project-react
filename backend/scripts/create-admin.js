@@ -11,28 +11,18 @@ async function main() {
   try {
     const email = await question('Admin email: ');
     const password = await question('Admin password: ');
+    const firstName = await question('First name (default: Admin): ') || 'Admin';
+    const lastName = await question('Last name (default: User): ') || 'User';
     rl.close();
 
     const hash = await bcrypt.hash(password, 10);
-    const payload = { email, password_hash: hash, first_name: 'Admin', last_name: 'User', role: 'admin' };
+    const payload = { email, password_hash: hash, first_name: firstName, last_name: lastName, role: 'admin' };
     const { data, error } = await supabase.from('users').insert([payload]).select().maybeSingle();
     if (error) {
       console.error('Error creating admin user:', error);
       process.exit(1);
     }
-    console.log('Admin user created:', data);
-
-    // For admin users, create a corresponding school record
-    const { data: schoolData, error: schoolError } = await supabase.from('schools').insert([{ 
-      user_id: data.id, 
-      school_name: 'System Admin', 
-      address: 'System Administrator' 
-    }]).select().maybeSingle();
-    if (schoolError) {
-      console.error('Failed to create admin school profile:', schoolError);
-      process.exit(1);
-    }
-    else console.log('Admin school profile created:', schoolData);
+    console.log('✅ Admin user created:', data);
 
     process.exit(0);
   } catch (err) {

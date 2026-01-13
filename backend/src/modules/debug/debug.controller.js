@@ -7,7 +7,8 @@ export const supabaseTest = asyncHandler(async (req, res) => {
   const payload = req.body || {
     email: `debug+${Date.now()}@example.com`,
     password_hash: 'test',
-    full_name: 'Debug User',
+    first_name: 'Debug',
+    last_name: 'User',
     role: 'student',
   };
 

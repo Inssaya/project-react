@@ -152,6 +152,8 @@ node test-api.js
 - React Native
 - Expo
 - Expo Router
+- React Hooks
+- StyleSheet API
 - AsyncStorage
 
 **Backend:**

@@ -9,7 +9,8 @@ describe('Auth endpoints', () => {
     const res = await request(app).post('/api/auth/register').send({
       email,
       password: 'password123',
-      full_name: 'Test User',
+      first_name: 'Test',
+      last_name: 'User',
       role: 'student',
     });
     expect(res.statusCode).toBe(201);

@@ -1,7 +1,23 @@
 -- MySchools Database Schema V2 - Clean Installation
--- This script will drop existing tables and recreate them in proper order
+-- Architecture: Express backend (service_role) → Supabase
+-- Authorization: Handled at Express middleware layer (not RLS)
+-- 
+-- USAGE: Run this entire script in Supabase SQL Editor
+-- WARNING: This will DROP all existing tables and data!
 
--- Drop all tables in reverse dependency order (to handle foreign key constraints)
+-- ========================================
+-- CLEANUP: Drop everything first
+-- ========================================
+
+-- Drop views first (they depend on tables)
+DROP VIEW IF EXISTS student_details CASCADE;
+DROP VIEW IF EXISTS teacher_details CASCADE;
+DROP VIEW IF EXISTS school_details CASCADE;
+
+-- Drop functions
+DROP FUNCTION IF EXISTS update_updated_at_column() CASCADE;
+
+-- Drop all tables in reverse dependency order
 DROP TABLE IF EXISTS grades CASCADE;
 DROP TABLE IF EXISTS attendance CASCADE;
 DROP TABLE IF EXISTS timetables CASCADE;
@@ -13,12 +29,16 @@ DROP TABLE IF EXISTS subjects CASCADE;
 DROP TABLE IF EXISTS classes CASCADE;
 DROP TABLE IF EXISTS majors CASCADE;
 DROP TABLE IF EXISTS schools CASCADE;
-DROP TABLE IF EXISTS profiles CASCADE;  -- Drop old profiles table if exists
-DROP TABLE IF EXISTS users CASCADE;     -- Drop old users table if exists
+DROP TABLE IF EXISTS profiles CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
 
 -- Enable UUID generation
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- ========================================
+-- TABLES
+-- ========================================
 
 -- 1. USERS TABLE (Authentication)
 -- Every role (admin, school, teacher, student) has a user account
@@ -178,25 +198,68 @@ CREATE TABLE grades (
 -- ========================================
 -- INDEXES for better performance
 -- ========================================
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
-CREATE INDEX IF NOT EXISTS idx_schools_user_id ON schools(user_id);
-CREATE INDEX IF NOT EXISTS idx_teachers_user_id ON teachers(user_id);
-CREATE INDEX IF NOT EXISTS idx_teachers_school_id ON teachers(school_id);
-CREATE INDEX IF NOT EXISTS idx_students_user_id ON students(user_id);
-CREATE INDEX IF NOT EXISTS idx_students_school_id ON students(school_id);
-CREATE INDEX IF NOT EXISTS idx_students_class_id ON students(class_id);
-CREATE INDEX IF NOT EXISTS idx_attendance_student_id ON attendance(student_id);
-CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date);
-CREATE INDEX IF NOT EXISTS idx_grades_student_id ON grades(student_id);
-CREATE INDEX IF NOT EXISTS idx_grades_subject_id ON grades(subject_id);
+
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_schools_user_id ON schools(user_id);
+CREATE INDEX idx_teachers_user_id ON teachers(user_id);
+CREATE INDEX idx_teachers_school_id ON teachers(school_id);
+CREATE INDEX idx_students_user_id ON students(user_id);
+CREATE INDEX idx_students_school_id ON students(school_id);
+CREATE INDEX idx_students_class_id ON students(class_id);
+CREATE INDEX idx_attendance_student_id ON attendance(student_id);
+CREATE INDEX idx_attendance_date ON attendance(date);
+CREATE INDEX idx_grades_student_id ON grades(student_id);
+CREATE INDEX idx_grades_subject_id ON grades(subject_id);
 
 -- ========================================
--- VIEWS for easier querying
+-- FUNCTION: Auto-update updated_at
+-- Fixed: SECURITY INVOKER + search_path = ''
+-- ========================================
+
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = ''
+AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+-- ========================================
+-- TRIGGERS for auto-updating updated_at
+-- ========================================
+
+CREATE TRIGGER update_users_updated_at
+  BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_schools_updated_at
+  BEFORE UPDATE ON schools
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_teachers_updated_at
+  BEFORE UPDATE ON teachers
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_students_updated_at
+  BEFORE UPDATE ON students
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_grades_updated_at
+  BEFORE UPDATE ON grades
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ========================================
+-- VIEWS (SECURITY INVOKER - no warnings)
 -- ========================================
 
 -- Student full info with user details
-CREATE OR REPLACE VIEW student_details AS
+CREATE VIEW student_details 
+WITH (security_invoker = true) AS
 SELECT 
   s.id as student_id,
   u.id as user_id,
@@ -221,7 +284,8 @@ LEFT JOIN majors m ON s.major_id = m.id
 LEFT JOIN classes c ON s.class_id = c.id;
 
 -- Teacher full info with user details
-CREATE OR REPLACE VIEW teacher_details AS
+CREATE VIEW teacher_details 
+WITH (security_invoker = true) AS
 SELECT 
   t.id as teacher_id,
   u.id as user_id,
@@ -238,7 +302,8 @@ JOIN users u ON t.user_id = u.id
 JOIN schools sch ON t.school_id = sch.id;
 
 -- School full info with user details
-CREATE OR REPLACE VIEW school_details AS
+CREATE VIEW school_details 
+WITH (security_invoker = true) AS
 SELECT 
   s.id as school_id,
   u.id as user_id,
@@ -253,12 +318,24 @@ FROM schools s
 JOIN users u ON s.user_id = u.id;
 
 -- ========================================
--- Create the admin user
+-- NOTES
 -- ========================================
--- Use this to create your initial admin user:
--- INSERT INTO users (email, password_hash, first_name, last_name, role) 
--- VALUES ('admin@example.com', '$2b$10$CwTycUXWue0Thq9StjUM0uJ8rKz9rG1vQ6e7YqKq7B9pZ2P9qz7lK', 'Admin', 'User', 'admin');
 -- 
--- Then get the user ID and create the corresponding school profile:
--- INSERT INTO schools (user_id, school_name, address) 
--- VALUES ('[USER_ID_FROM_ABOVE]', 'System Admin', 'System Administrator');
+-- WHY NO RLS (Row Level Security)?
+-- ---------------------------------
+-- This database is accessed ONLY via Express backend using service_role key.
+-- Authorization is handled at the Express middleware layer:
+--   - auth.middleware.js: Verifies JWT tokens
+--   - role.middleware.js: Checks user roles (admin, school, teacher, student)
+-- 
+-- The service_role key bypasses RLS entirely, so adding RLS policies
+-- would be redundant and just create confusing warnings.
+--
+-- If you later need direct client access (e.g., Supabase Realtime),
+-- you would add RLS policies then.
+--
+-- CREATE ADMIN USER
+-- -----------------
+-- Use the create-admin.js script:
+--   cd backend && node scripts/create-admin.js
+--

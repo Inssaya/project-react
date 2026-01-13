@@ -1,5 +1,5 @@
-import * as model from './user.model.js';
 import * as authService from '../auth/auth.service.js';
+import * as model from './user.model.js';
 
 export const listUsers = async () => {
   const { data, error } = await model.getAll();
@@ -26,18 +26,10 @@ export const deleteUser = async (id) => {
 };
 
 export const createUserFromAdmin = async (payload) => {
-  // payload expected to contain email, password, full_name, role and optional class/major ids
-  const { email, password, full_name, role, major_id, class_id } = payload;
-  const created = await authService.register({ email, password, full_name, role });
-  // If there are class or major associations, create profile details
-  if (created && created.id && (major_id || class_id)) {
-    try {
-      await authService.createProfileForUser(created.id, role, major_id || null, class_id || null);
-    } catch (err) {
-      // Log and continue; profile creation errors should not block user creation here
-      console.error('Warning: failed to add extra profile details for user', err);
-    }
-  }
+  // payload expected to contain email, password, first_name, last_name, role and optional class/major ids
+  const { email, password, first_name, last_name, role, major_id, class_id } = payload;
+  const created = await authService.register({ email, password, first_name, last_name, role });
+  // Note: Profile associations are handled separately if needed
   return created;
 };
 

@@ -2,10 +2,16 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'JWT_SECRET', 'PORT'];
+const required = ['SUPABASE_URL', 'JWT_SECRET', 'PORT'];
+const recommended = ['SUPABASE_SERVICE_ROLE_KEY'];
 const missing = required.filter((k) => !process.env[k]);
+const missingRecommended = recommended.filter((k) => !process.env[k]);
+
 if (missing.length) {
-  console.warn('Missing env vars:', missing.join(', '));
+  console.warn('❌ Missing required env vars:', missing.join(', '));
+}
+if (missingRecommended.length) {
+  console.warn('⚠️  Missing recommended env vars:', missingRecommended.join(', '));
 }
 
 export const env = {

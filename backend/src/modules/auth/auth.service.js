@@ -2,13 +2,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import env from '../../config/env.js';
 import * as authModel from './auth.model.js';
-import supabase from '../../config/supabase.js';
-import { getServiceSupabase } from '../../config/supabase.js';
 
 /**
  * Register a new user: hashes password and inserts into users table.
  */
-export const register = async ({ email, password, full_name, role }) => {
+export const register = async ({ email, password, first_name, last_name, role }) => {
   const existing = await authModel.findByEmail(email);
   if (existing.error) throw existing.error;
   if (existing.data) {
@@ -17,36 +15,10 @@ export const register = async ({ email, password, full_name, role }) => {
     throw err;
   }
 
-  // If a service role key is available, create a Supabase Auth user and link profile
-  const service = getServiceSupabase();
-  let created = { data: null, error: null };
-  if (service) {
-    try {
-      const { data: authData, error: authErr } = await service.auth.admin.createUser({
-        email,
-        password,
-        user_metadata: { full_name },
-      });
-      if (authErr) {
-        created.error = authErr;
-      } else {
-        // Insert profile linked to auth user
-        const profilePayload = { auth_user_id: authData.user.id, role };
-        const { data: profileData, error: profileErr } = await supabase.from('profiles').insert([profilePayload]).select().maybeSingle();
-        if (profileErr) {
-          created.error = profileErr;
-        } else {
-          created.data = { id: authData.user.id, email: authData.user.email, full_name, role };
-        }
-      }
-    } catch (err) {
-      created.error = err;
-    }
-  } else {
-    const hash = await bcrypt.hash(password, 10);
-    const payload = { email, password_hash: hash, full_name, role };
-    created = await authModel.createUser(payload);
-  }
+  // Hash password and create user in database
+  const hash = await bcrypt.hash(password, 10);
+  const payload = { email, password_hash: hash, first_name, last_name, role };
+  const created = await authModel.createUser(payload);
   // If Supabase returned an error, surface it
   if (created.error) {
     console.error('Supabase createUser error:', created.error);
@@ -65,22 +37,14 @@ export const register = async ({ email, password, full_name, role }) => {
     throw err;
   }
 
-  // If using non-service flow we already created profile in createUser path; if service flow, profile created above.
+  // Return user data with computed full_name for frontend convenience
+  const userData = {
+    ...created.data,
+    full_name: `${created.data.first_name} ${created.data.last_name}`.trim(),
+  };
+  delete userData.password_hash; // Don't expose password hash
 
-  return created.data;
-};
-
-// After creating a user in `users` table, also create a profile row to link roles
-export const createProfileForUser = async (userId, role, major_id = null, class_id = null) => {
-  const payload = { auth_user_id: userId, role, major_id, class_id };
-  const { data, error } = await supabase.from('profiles').insert([payload]).select().maybeSingle();
-  if (error) {
-    console.error('Failed to create profile for user', error);
-    const err = new Error('Failed to create profile for user');
-    err.status = 500;
-    throw err;
-  }
-  return data;
+  return userData;
 };
 
 /**
@@ -102,7 +66,19 @@ export const login = async ({ email, password }) => {
   }
 
   const token = jwt.sign({ sub: found.data.id, role: found.data.role }, env.JWT_SECRET, { expiresIn: '7d' });
-  return { user: found.data, token };
+  
+  // Return user data with computed full_name for frontend convenience
+  const userData = {
+    id: found.data.id,
+    email: found.data.email,
+    first_name: found.data.first_name,
+    last_name: found.data.last_name,
+    full_name: `${found.data.first_name} ${found.data.last_name}`.trim(),
+    role: found.data.role,
+    is_active: found.data.is_active,
+  };
+
+  return { user: userData, token };
 };
 
 export default { register, login };

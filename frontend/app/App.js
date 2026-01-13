@@ -1,8 +1,8 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import CreateStudentScreen from './CreateStudentScreen';
 import CreateClassScreen from './screens/CreateClassScreen';
 import CreateSchoolScreen from './screens/CreateSchoolScreen';
-import CreateStudentScreen from './screens/CreateStudentScreen';
 import CreateTeacherScreen from './screens/CreateTeacherScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import LoginScreen from './screens/LoginScreen';

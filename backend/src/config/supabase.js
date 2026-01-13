@@ -3,18 +3,18 @@ import env from './env.js';
 
 /**
  * Supabase client singleton used by models/services.
- * Uses the anon key from env; do not expose service role here.
+ * Uses SERVICE_ROLE key for backend operations (bypasses RLS).
+ * Authorization is handled at Express middleware layer.
+ * Falls back to anon key if service_role not configured.
  */
-const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY, {
+const supabaseKey = env.SUPABASE_SERVICE_ROLE_KEY || env.SUPABASE_ANON_KEY;
+
+if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn('⚠️  SUPABASE_SERVICE_ROLE_KEY not set - using anon key (RLS will apply)');
+}
+
+const supabase = createClient(env.SUPABASE_URL, supabaseKey, {
   auth: { persistSession: false },
 });
-
-let serviceClient = null;
-export const getServiceSupabase = () => {
-  if (!serviceClient && env.SUPABASE_SERVICE_ROLE_KEY) {
-    serviceClient = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-  }
-  return serviceClient;
-};
 
 export default supabase;
