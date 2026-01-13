@@ -66,7 +66,8 @@ export default function MajorsListScreen() {
   const renderItem = ({ item }) => (
     <ListCard
       title={item.name}
-      subtitle={item.description || "No description"}
+      subtitle={item.school?.school_name || "No school assigned"}
+      description={item.description || ""}
       leftContent={
         <View className="w-12 h-12 bg-warning-50 rounded-full items-center justify-center">
           <Ionicons name="bookmark" size={24} color="#F59E0B" />

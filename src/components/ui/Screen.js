@@ -1,5 +1,6 @@
 // Screen - Base screen wrapper component
-import { KeyboardAvoidingView, Platform, SafeAreaView, ScrollView, View } from "react-native";
+import { KeyboardAvoidingView, Platform, ScrollView, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export function Screen({
   children,
@@ -8,6 +9,7 @@ export function Screen({
   keyboard = false,
   className = "",
   contentClassName = "",
+  edges = ["top", "bottom"],
 }) {
   const baseClass = "flex-1 bg-surface-50";
   const contentClass = padded ? "px-4 py-6" : "";
@@ -26,7 +28,7 @@ export function Screen({
 
   if (keyboard) {
     return (
-      <SafeAreaView className={`${baseClass} ${className}`}>
+      <SafeAreaView className={`${baseClass} ${className}`} edges={edges}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           className="flex-1"
@@ -37,7 +39,7 @@ export function Screen({
     );
   }
 
-  return <SafeAreaView className={`${baseClass} ${className}`}>{content}</SafeAreaView>;
+  return <SafeAreaView className={`${baseClass} ${className}`} edges={edges}>{content}</SafeAreaView>;
 }
 
 export default Screen;

@@ -109,7 +109,7 @@ export default function DashboardScreen() {
         icon: "business",
         route: "/(main)/schools",
         color: "primary",
-        roles: ["admin"],
+        roles: ["admin"], // Only admin can see all schools
       },
       {
         id: "classes",
@@ -117,7 +117,7 @@ export default function DashboardScreen() {
         icon: "library",
         route: "/(main)/classes",
         color: "success",
-        roles: ["admin", "teacher"],
+        roles: ["admin", "school", "teacher"],
       },
       {
         id: "students",
@@ -125,7 +125,7 @@ export default function DashboardScreen() {
         icon: "people",
         route: "/(main)/students",
         color: "warning",
-        roles: ["admin", "teacher"],
+        roles: ["admin", "school", "teacher"],
       },
       {
         id: "teachers",
@@ -133,7 +133,7 @@ export default function DashboardScreen() {
         icon: "school",
         route: "/(main)/teachers",
         color: "danger",
-        roles: ["admin"],
+        roles: ["admin", "school"],
       },
       {
         id: "attendance",
@@ -141,7 +141,7 @@ export default function DashboardScreen() {
         icon: "checkmark-done",
         route: "/(main)/attendance",
         color: "success",
-        roles: ["admin", "teacher"],
+        roles: ["admin", "school", "teacher"],
       },
       {
         id: "grades",
@@ -149,7 +149,7 @@ export default function DashboardScreen() {
         icon: "ribbon",
         route: "/(main)/grades",
         color: "primary",
-        roles: ["admin", "teacher"],
+        roles: ["admin", "school", "teacher", "student"],
       },
       {
         id: "majors",
@@ -157,7 +157,7 @@ export default function DashboardScreen() {
         icon: "bookmark",
         route: "/(main)/majors",
         color: "warning",
-        roles: ["admin"],
+        roles: ["admin", "school"],
       },
     ];
 
@@ -183,7 +183,7 @@ export default function DashboardScreen() {
           <View className="flex-1">
             <Text className="text-white/80 text-sm">Welcome back,</Text>
             <Heading size="md" className="text-white mt-1">
-              {user?.full_name || user?.first_name || "User"}
+              {user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : "User"}
             </Heading>
           </View>
           
@@ -195,7 +195,7 @@ export default function DashboardScreen() {
               <Ionicons name="notifications-outline" size={22} color="white" />
             </Pressable>
             <Pressable onPress={handleLogout}>
-              <Avatar name={user?.full_name || "U"} size="md" />
+              <Avatar name={user?.first_name || "U"} size="md" />
             </Pressable>
           </View>
         </View>
@@ -203,10 +203,10 @@ export default function DashboardScreen() {
         {/* User Card */}
         <Card className="bg-white/10 border-0">
           <View className="flex-row items-center">
-            <Avatar name={user?.full_name || "U"} size="lg" />
+            <Avatar name={user?.first_name || "U"} size="lg" />
             <View className="flex-1 ml-4">
               <Text className="text-white font-semibold text-lg">
-                {user?.full_name || "Unknown User"}
+                {user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : "Unknown User"}
               </Text>
               <Text className="text-white/70 text-sm">{user?.email}</Text>
               <View className="mt-2">

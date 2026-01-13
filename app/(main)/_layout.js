@@ -9,22 +9,11 @@ export default function MainLayout() {
       }}
     >
       <Stack.Screen name="dashboard" />
-      {/* Schools */}
-      <Stack.Screen name="schools/index" />
-      <Stack.Screen name="schools/create" />
-      {/* Classes */}
-      <Stack.Screen name="classes/index" />
-      <Stack.Screen name="classes/create" />
-      {/* Students */}
-      <Stack.Screen name="students/index" />
-      <Stack.Screen name="students/create" />
-      {/* Teachers */}
-      <Stack.Screen name="teachers/index" />
-      <Stack.Screen name="teachers/create" />
-      {/* Majors */}
-      <Stack.Screen name="majors/index" />
-      <Stack.Screen name="majors/create" />
-      {/* Core features */}
+      <Stack.Screen name="schools" />
+      <Stack.Screen name="classes" />
+      <Stack.Screen name="students" />
+      <Stack.Screen name="teachers" />
+      <Stack.Screen name="majors" />
       <Stack.Screen name="attendance" />
       <Stack.Screen name="grades" />
     </Stack>

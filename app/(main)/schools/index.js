@@ -48,7 +48,7 @@ export default function SchoolsListScreen() {
       setFiltered(
         schools.filter(
           (s) =>
-            s.name?.toLowerCase().includes(query) ||
+            s.school_name?.toLowerCase().includes(query) ||
             s.address?.toLowerCase().includes(query)
         )
       );
@@ -65,9 +65,9 @@ export default function SchoolsListScreen() {
 
   const renderItem = ({ item }) => (
     <ListCard
-      title={item.name}
+      title={item.school_name || "Unnamed School"}
       subtitle={item.address || "No address"}
-      description={item.phone || item.email}
+      description={item.phone_number || item.email}
       leftContent={
         <View className="w-12 h-12 bg-primary-100 rounded-full items-center justify-center">
           <Ionicons name="business" size={24} color="#3B82F6" />
@@ -76,7 +76,7 @@ export default function SchoolsListScreen() {
       rightContent={
         <Ionicons name="chevron-forward" size={20} color="#A1A1AA" />
       }
-      onPress={() => {/* Navigate to school details */}}
+      onPress={() => router.push(`/(main)/schools/${item.id}`)}
     />
   );
 

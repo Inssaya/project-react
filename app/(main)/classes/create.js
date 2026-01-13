@@ -1,6 +1,6 @@
 // Create Class Screen
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import {
@@ -14,17 +14,20 @@ import {
     SuccessBanner,
     Text,
 } from "../../../src/components/ui";
-import { api } from "../../../src/lib";
+import { api, auth } from "../../../src/lib";
 
 export default function CreateClassScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
-    school_id: "",
-    grade_level: "",
-    academic_year: "",
+    school_id: params.school_id || "",
+    major_id: "",
+    year: "",
   });
   const [schools, setSchools] = useState([]);
+  const [majors, setMajors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState("");
@@ -32,15 +35,32 @@ export default function CreateClassScreen() {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    loadSchools();
+    loadInitialData();
   }, []);
 
-  const loadSchools = async () => {
+  const loadInitialData = async () => {
     try {
-      const response = await api.schools.list();
-      setSchools(response.data || []);
+      // Get current user to check role
+      const currentUser = await auth.getCurrentUser();
+      setUser(currentUser);
+
+      // If user is school role, auto-set their school_id
+      if (currentUser?.role === "school" && currentUser?.school_id) {
+        setFormData(prev => ({ ...prev, school_id: currentUser.school_id }));
+        // Load majors for this school
+        try {
+          const majorsRes = await api.majors.list();
+          setMajors((majorsRes.data || []).filter(m => m.school_id === currentUser.school_id));
+        } catch {}
+      }
+
+      // Only admin needs to see school list
+      if (currentUser?.role === "admin") {
+        const response = await api.schools.list();
+        setSchools(response.data || []);
+      }
     } catch (err) {
-      setError("Failed to load schools");
+      setError("Failed to load data");
     } finally {
       setLoadingData(false);
     }
@@ -61,7 +81,7 @@ export default function CreateClassScreen() {
     }
 
     if (!formData.school_id) {
-      newErrors.school_id = "Please select a school";
+      newErrors.school_id = "School is required";
     }
 
     setErrors(newErrors);
@@ -79,8 +99,8 @@ export default function CreateClassScreen() {
       await api.classes.create({
         name: formData.name.trim(),
         school_id: formData.school_id,
-        grade_level: formData.grade_level || null,
-        academic_year: formData.academic_year || null,
+        major_id: formData.major_id || null,
+        year: formData.year || null,
       });
 
       setSuccess("Class created successfully!");
@@ -95,30 +115,22 @@ export default function CreateClassScreen() {
   };
 
   const schoolOptions = schools.map((s) => ({
-    label: s.name,
+    label: s.school_name,
     value: s.id,
   }));
 
-  const gradeOptions = [
-    { label: "Grade 1", value: "1" },
-    { label: "Grade 2", value: "2" },
-    { label: "Grade 3", value: "3" },
-    { label: "Grade 4", value: "4" },
-    { label: "Grade 5", value: "5" },
-    { label: "Grade 6", value: "6" },
-    { label: "Grade 7", value: "7" },
-    { label: "Grade 8", value: "8" },
-    { label: "Grade 9", value: "9" },
-    { label: "Grade 10", value: "10" },
-    { label: "Grade 11", value: "11" },
-    { label: "Grade 12", value: "12" },
-  ];
+  const majorOptions = majors.map((m) => ({
+    label: m.name,
+    value: m.id,
+  }));
 
   const yearOptions = [
     { label: "2024-2025", value: "2024-2025" },
     { label: "2025-2026", value: "2025-2026" },
     { label: "2026-2027", value: "2026-2027" },
   ];
+
+  const isSchoolRole = user?.role === "school";
 
   return (
     <Screen keyboard>
@@ -152,34 +164,49 @@ export default function CreateClassScreen() {
           leftIcon={<Ionicons name="library-outline" size={20} color="#71717A" />}
         />
 
-        <Select
-          label="School"
-          value={formData.school_id}
-          onValueChange={(value) => updateField("school_id", value)}
-          options={schoolOptions}
-          placeholder="Select a school"
-          error={errors.school_id}
-          required
-          disabled={loadingData}
-        />
+        {/* School Selection - Only for Admin */}
+        {!isSchoolRole && (
+          <Select
+            label="School"
+            value={formData.school_id}
+            onValueChange={(value) => updateField("school_id", value)}
+            options={schoolOptions}
+            placeholder="Select a school"
+            error={errors.school_id}
+            required
+            disabled={loadingData}
+          />
+        )}
 
-        <Select
-          label="Grade Level"
-          value={formData.grade_level}
-          onValueChange={(value) => updateField("grade_level", value)}
-          options={gradeOptions}
-          placeholder="Select grade level"
-        />
+        {/* Show school info for school role */}
+        {isSchoolRole && user?.school_name && (
+          <View className="bg-primary-50 p-3 rounded-lg mb-4">
+            <Text className="text-sm text-primary-700">
+              <Ionicons name="business-outline" size={14} /> Creating class for: {user.school_name}
+            </Text>
+          </View>
+        )}
+
+        {/* Major Selection - Optional */}
+        {majors.length > 0 && (
+          <Select
+            label="Major (Optional)"
+            value={formData.major_id}
+            onValueChange={(value) => updateField("major_id", value)}
+            options={majorOptions}
+            placeholder="Select a major"
+          />
+        )}
 
         <Select
           label="Academic Year"
-          value={formData.academic_year}
-          onValueChange={(value) => updateField("academic_year", value)}
+          value={formData.year}
+          onValueChange={(value) => updateField("year", value)}
           options={yearOptions}
           placeholder="Select academic year"
         />
 
-        <View className="flex-row space-x-3 mt-6">
+        <View className="flex-row space-x-3 mt-6 mb-8">
           <Button
             variant="secondary"
             onPress={() => router.back()}

@@ -1,6 +1,6 @@
 // Create Student Screen
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { View } from "react-native";
 import {
@@ -15,20 +15,22 @@ import {
     SuccessBanner,
     Text,
 } from "../../../src/components/ui";
-import { api } from "../../../src/lib";
+import { api, auth } from "../../../src/lib";
 
 export default function CreateStudentScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     first_name: "",
     last_name: "",
     email: "",
     password: "",
-    roll_number: "",
+    school_id: params.school_id || "",
     class_id: "",
-    date_of_birth: "",
-    parent_contact: "",
+    parent_phone_number: "",
   });
+  const [schools, setSchools] = useState([]);
   const [classes, setClasses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
@@ -37,24 +39,49 @@ export default function CreateStudentScreen() {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    loadClasses();
+    loadInitialData();
   }, []);
 
-  const loadClasses = async () => {
+  const loadInitialData = async () => {
     try {
-      const response = await api.classes.list();
-      setClasses(response.data || []);
+      // Get current user to check role
+      const currentUser = await auth.getCurrentUser();
+      setUser(currentUser);
+
+      // If user is school role, auto-set their school_id
+      if (currentUser?.role === "school" && currentUser?.school_id) {
+        setFormData(prev => ({ ...prev, school_id: currentUser.school_id }));
+      }
+
+      // Only admin needs to see school list
+      if (currentUser?.role === "admin") {
+        const schoolsRes = await api.schools.list();
+        setSchools(schoolsRes.data || []);
+      }
+
+      // Load classes
+      const classesRes = await api.classes.list();
+      setClasses(classesRes.data || []);
     } catch (err) {
-      setError("Failed to load classes");
+      setError("Failed to load data");
     } finally {
       setLoadingData(false);
     }
   };
 
+  // Filter classes by selected school
+  const filteredClasses = formData.school_id 
+    ? classes.filter(c => c.school_id === formData.school_id)
+    : classes;
+
   const updateField = (field, value) => {
     setFormData({ ...formData, [field]: value });
     if (errors[field]) {
       setErrors({ ...errors, [field]: "" });
+    }
+    // If school changes, reset class selection
+    if (field === "school_id") {
+      setFormData(prev => ({ ...prev, school_id: value, class_id: "" }));
     }
   };
 
@@ -81,6 +108,14 @@ export default function CreateStudentScreen() {
       newErrors.password = "Password must be at least 6 characters";
     }
 
+    if (!formData.school_id) {
+      newErrors.school_id = "School is required";
+    }
+
+    if (!formData.parent_phone_number.trim()) {
+      newErrors.parent_phone_number = "Parent phone number is required";
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -98,10 +133,9 @@ export default function CreateStudentScreen() {
         last_name: formData.last_name.trim(),
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
-        roll_number: formData.roll_number.trim() || null,
+        school_id: formData.school_id,
         class_id: formData.class_id || null,
-        date_of_birth: formData.date_of_birth || null,
-        parent_contact: formData.parent_contact.trim() || null,
+        parent_phone_number: formData.parent_phone_number.trim(),
       });
 
       setSuccess("Student created successfully!");
@@ -115,10 +149,17 @@ export default function CreateStudentScreen() {
     }
   };
 
-  const classOptions = classes.map((c) => ({
-    label: `${c.name} (${c.school?.name || "No school"})`,
+  const schoolOptions = schools.map((s) => ({
+    label: s.school_name,
+    value: s.id,
+  }));
+
+  const classOptions = filteredClasses.map((c) => ({
+    label: c.name,
     value: c.id,
   }));
+
+  const isSchoolRole = user?.role === "school";
 
   return (
     <Screen keyboard>
@@ -171,32 +212,49 @@ export default function CreateStudentScreen() {
         </View>
 
         <Input
-          label="Roll Number"
-          value={formData.roll_number}
-          onChangeText={(text) => updateField("roll_number", text)}
-          placeholder="e.g., STU-2025-001"
-          leftIcon={<Ionicons name="id-card-outline" size={20} color="#71717A" />}
-        />
-
-        <Input
-          label="Parent Contact"
-          value={formData.parent_contact}
-          onChangeText={(text) => updateField("parent_contact", text)}
+          label="Parent Phone Number"
+          value={formData.parent_phone_number}
+          onChangeText={(text) => updateField("parent_phone_number", text)}
           placeholder="Parent phone number"
           keyboardType="phone-pad"
+          error={errors.parent_phone_number}
+          required
           leftIcon={<Ionicons name="call-outline" size={20} color="#71717A" />}
         />
+
+        {/* School Selection - Only for Admin */}
+        {!isSchoolRole && (
+          <Select
+            label="School"
+            value={formData.school_id}
+            onValueChange={(value) => updateField("school_id", value)}
+            options={schoolOptions}
+            placeholder="Select a school"
+            disabled={loadingData}
+            error={errors.school_id}
+            required
+          />
+        )}
+
+        {/* Show school info for school role */}
+        {isSchoolRole && user?.school_name && (
+          <View className="bg-primary-50 p-3 rounded-lg mb-4">
+            <Text className="text-sm text-primary-700">
+              <Ionicons name="business-outline" size={14} /> Adding to: {user.school_name}
+            </Text>
+          </View>
+        )}
 
         <Select
           label="Class"
           value={formData.class_id}
           onValueChange={(value) => updateField("class_id", value)}
           options={classOptions}
-          placeholder="Select a class"
-          disabled={loadingData}
+          placeholder={formData.school_id ? "Select a class" : "Select school first"}
+          disabled={loadingData || !formData.school_id}
         />
 
-        <Divider />
+        <Divider className="my-4" />
 
         {/* Account Info */}
         <Text className="text-sm font-semibold text-surface-500 mb-3">
@@ -226,7 +284,7 @@ export default function CreateStudentScreen() {
           leftIcon={<Ionicons name="lock-closed-outline" size={20} color="#71717A" />}
         />
 
-        <View className="flex-row space-x-3 mt-6">
+        <View className="flex-row space-x-3 mt-6 mb-8">
           <Button
             variant="secondary"
             onPress={() => router.back()}

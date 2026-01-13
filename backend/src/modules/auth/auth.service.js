@@ -1,6 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import env from '../../config/env.js';
+import supabase from '../../config/supabase.js';
 import * as authModel from './auth.model.js';
 
 /**
@@ -77,6 +78,50 @@ export const login = async ({ email, password }) => {
     role: found.data.role,
     is_active: found.data.is_active,
   };
+
+  // If user is a school admin, get their school_id
+  if (found.data.role === 'school') {
+    const { data: school } = await supabase
+      .from('schools')
+      .select('id, school_name')
+      .eq('user_id', found.data.id)
+      .maybeSingle();
+    
+    if (school) {
+      userData.school_id = school.id;
+      userData.school_name = school.school_name;
+    }
+  }
+
+  // If user is a teacher, get their school_id
+  if (found.data.role === 'teacher') {
+    const { data: teacher } = await supabase
+      .from('teachers')
+      .select('id, school_id')
+      .eq('user_id', found.data.id)
+      .maybeSingle();
+    
+    if (teacher) {
+      userData.teacher_id = teacher.id;
+      userData.school_id = teacher.school_id;
+    }
+  }
+
+  // If user is a student, get their school_id and class_id
+  if (found.data.role === 'student') {
+    const { data: student } = await supabase
+      .from('students')
+      .select('id, school_id, class_id, major_id')
+      .eq('user_id', found.data.id)
+      .maybeSingle();
+    
+    if (student) {
+      userData.student_id = student.id;
+      userData.school_id = student.school_id;
+      userData.class_id = student.class_id;
+      userData.major_id = student.major_id;
+    }
+  }
 
   return { user: userData, token };
 };

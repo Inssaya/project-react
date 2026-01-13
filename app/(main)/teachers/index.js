@@ -54,7 +54,7 @@ export default function TeachersListScreen() {
             t.last_name?.toLowerCase().includes(query) ||
             t.user?.first_name?.toLowerCase().includes(query) ||
             t.user?.last_name?.toLowerCase().includes(query) ||
-            t.specialization?.toLowerCase().includes(query)
+            t.user?.email?.toLowerCase().includes(query)
         )
       );
     } else {
@@ -77,8 +77,8 @@ export default function TeachersListScreen() {
   const renderItem = ({ item }) => (
     <ListCard
       title={getTeacherName(item)}
-      subtitle={item.specialization || "No specialization"}
-      description={item.school?.name || "No school assigned"}
+      subtitle={item.user?.email || "No email"}
+      description={item.school?.school_name || "No school assigned"}
       leftContent={<Avatar name={getTeacherName(item)} size="md" />}
       rightContent={
         <Badge variant="primary" size="sm">

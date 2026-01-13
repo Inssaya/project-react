@@ -240,7 +240,7 @@ export default function RecordGradesScreen() {
   };
 
   const classOptions = classes.map((c) => ({
-    label: `${c.name} (${c.school?.name || "No school"})`,
+    label: `${c.name} (${c.school?.school_name || "No school"})`,
     value: c.id,
   }));
 

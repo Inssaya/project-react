@@ -67,8 +67,8 @@ export default function ClassesListScreen() {
   const renderItem = ({ item }) => (
     <ListCard
       title={item.name}
-      subtitle={item.school?.name || "No school assigned"}
-      description={`Grade ${item.grade_level || "N/A"} • ${item.academic_year || "N/A"}`}
+      subtitle={item.school?.school_name || "No school assigned"}
+      description={item.year ? `Year: ${item.year}` : ""}
       leftContent={
         <View className="w-12 h-12 bg-success-50 rounded-full items-center justify-center">
           <Ionicons name="library" size={24} color="#10B981" />
