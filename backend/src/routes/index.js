@@ -7,7 +7,7 @@ import schoolRoutes from '../modules/schools/school.routes.js';
 import studentRoutes from '../modules/students/student.routes.js';
 import teacherRoutes from '../modules/teachers/teacher.routes.js';
 import userRoutes from '../modules/users/user.routes.js';
-
+import majorRoutes from '../modules/majors/major.routes.js';
 const router = Router();
 
 // API root - quick index for testing
@@ -35,6 +35,6 @@ router.use('/classes', classRoutes);
 router.use('/students', studentRoutes);
 router.use('/teachers', teacherRoutes);
 router.use('/attendance', attendanceRoutes);
-	router.use('/debug', debugRoutes);
-
+router.use('/debug', debugRoutes);
+router.use('/majors', majorRoutes);
 export default router;

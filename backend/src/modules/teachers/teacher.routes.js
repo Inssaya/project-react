@@ -5,7 +5,7 @@ import * as controller from './teacher.controller.js';
 
 const router = express.Router();
 
-router.post('/', authenticate, allowRoles('admin'), controller.create);
+router.post('/', authenticate, allowRoles('admin','school'), controller.create);
 router.get('/', authenticate, controller.list);
 router.get('/:id', authenticate, controller.get);
 router.put('/:id', authenticate, allowRoles('admin'), controller.update);
